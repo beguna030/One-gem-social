@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Bewerbungen – One Gem intern</title>
+<meta name="theme-color" content="#120E1A">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+  .intern { padding-block: clamp(28px, 5vw, 56px) 64px; display: grid; gap: 24px; }
+  .ihead { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+  .ihead h1 { font-size: clamp(44px, 7vw, 72px); }
+  .ihead p { color: var(--haze); margin-top: 8px; }
+  .login { max-width: 420px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filter { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--haze); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .filter b { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+  .filter[aria-pressed="true"] { background: var(--ink); color: var(--night); border-color: var(--ink); }
+  .filter[aria-pressed="true"] b { color: var(--night); }
+  .search { flex: 1; min-width: 180px; max-width: 320px; }
+  .search input { width: 100%; min-height: 40px; border-radius: 999px; border: 1px solid var(--line); background: var(--dusk); color: var(--ink); font: inherit; font-size: 15px; padding: 0 16px; }
+  .list { display: grid; gap: 12px; }
+  .app { background: var(--dusk); border: 1px solid var(--line); border-left: 4px solid var(--st, var(--line)); border-radius: 18px; padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
+  .app[data-status="neu"] { --st: var(--amethyst); }
+  .app[data-status="angeschaut"] { --st: var(--aqua); }
+  .app[data-status="angenommen"] { --st: #5FD38D; }
+  .app[data-status="abgesagt"] { --st: var(--haze); opacity: .78; }
+  .arow { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+  .aname { font-family: var(--display); font-weight: 900; font-size: 30px; line-height: 1; text-transform: uppercase; margin: 0; }
+  .when { color: var(--haze); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .facts2 { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--haze); font-size: 15px; }
+  .facts2 b { color: var(--ink); font-weight: 600; }
+  .facts2 a { color: var(--aqua); font-weight: 600; }
+  .about { color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font-size: 15.5px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .actions label { color: var(--haze); font-size: 13.5px; }
+  .actions select { min-height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--night); color: var(--ink); font: inherit; font-size: 14.5px; padding: 0 10px; }
+  .actions .spacer { flex: 1; }
+  .btn.danger { border-color: color-mix(in srgb, var(--live) 50%, var(--line)); color: var(--live); }
+  .btn.danger.armed { background: var(--live); color: #fff; border-color: var(--live); }
+  .state { color: var(--haze); padding: 28px 0; }
+  .note { font-size: 13.5px; color: var(--haze); }
+  .err { color: var(--live); font-size: 14px; margin: 0; }
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Hauptnavigation">
+  <div class="wrap">
+    <a class="brand" href="index.html"><svg viewBox="0 0 40 40" width="26" height="26" aria-hidden="true"><defs><linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B07CFF"/><stop offset="1" stop-color="#74E4DE"/></linearGradient></defs><path d="M12 8h16l8 9-16 17L4 17z" fill="url(#gm)"/></svg>ONE GEM</a>
+    <button class="btn sm" id="logout" type="button" hidden>Abmelden</button>
+  </div>
+</nav>
+
+<main class="wrap intern">
+  <div class="ihead">
+    <div>
+      <h1>Bewerbungen</h1>
+      <p id="sub">Interner Bereich für das One-Gem-Team.</p>
+    </div>
+  </div>
+
+  <section id="loginView" class="applycard login" hidden>
+    <h3>Anmelden</h3>
+    <p>Gleiches Passwort wie im BeGuNa-Backoffice.</p>
+    <form id="loginForm" class="field" novalidate>
+      <label for="pw">Passwort</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <p class="err" id="loginErr" role="alert" hidden></p>
+      <button class="btn gem" type="submit" id="loginBtn" style="justify-self:start;margin-top:8px">Anmelden</button>
+    </form>
+  </section>
+
+  <section id="appView" hidden>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px">
+      <div class="filters" id="filters" role="group" aria-label="Nach Status filtern"></div>
+      <div class="search"><input id="q" type="search" placeholder="Name, Account oder Ort suchen" aria-label="Bewerbungen durchsuchen"></div>
+    </div>
+    <div class="list" id="list" aria-live="polite"><p class="state">Bewerbungen werden geladen …</p></div>
+  </section>
+
+  <p class="state" id="boot">Wird geladen …</p>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyBPRhSkHQ3E1EP9W9xgqYzRjpuYIObpWDc",
+    authDomain: "backstage-beguna.firebaseapp.com",
+    projectId: "backstage-beguna",
+    storageBucket: "backstage-beguna.firebasestorage.app",
+    messagingSenderId: "7028261549",
+    appId: "1:7028261549:web:7a1a05279091909610bc24"
+  });
+  const ADMIN_EMAIL = "team@backstage-beguna.app";
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const STATUSES = [["neu", "Neu"], ["angeschaut", "Angeschaut"], ["angenommen", "Angenommen"], ["abgesagt", "Abgesagt"]];
+  const $ = (id) => document.getElementById(id);
+  let apps = [], filter = "neu", q = "", unsub = null, armed = null;
+
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = (ts) => ts && ts.toDate ? ts.toDate().toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " Uhr" : "gerade eben";
+
+  function renderFilters() {
+    const counts = Object.fromEntries(STATUSES.map(([k]) => [k, apps.filter((a) => (a.status || "neu") === k).length]));
+    const items = [["", "Alle", apps.length], ...STATUSES.map(([k, l]) => [k, l, counts[k]])];
+    $("filters").innerHTML = items.map(([k, l, n]) => `<button type="button" class="filter" data-f="${k}" aria-pressed="${filter === k}">${l} <b>${n}</b></button>`).join("");
+  }
+
+  function render() {
+    renderFilters();
+    const term = q.trim().toLowerCase();
+    const shown = apps.filter((a) => (!filter || (a.status || "neu") === filter) &&
+      (!term || [a.name, a.handle, a.city].some((x) => String(x || "").toLowerCase().includes(term))));
+    const n = apps.filter((a) => (a.status || "neu") === "neu").length;
+    $("sub").textContent = apps.length ? `${apps.length} Bewerbungen insgesamt, davon ${n} neu.` : "Noch keine Bewerbungen eingegangen.";
+    if (!apps.length) { $("list").innerHTML = `<p class="state">Noch keine Bewerbungen. Sobald sich jemand über die Website bewirbt, erscheint die Bewerbung hier.</p>`; return; }
+    if (!shown.length) { $("list").innerHTML = `<p class="state">Keine Bewerbungen in dieser Ansicht.</p>`; return; }
+    $("list").innerHTML = shown.map((a) => {
+      const handle = String(a.handle || "").replace(/^@/, "");
+      const st = a.status || "neu";
+      return `<article class="app" data-status="${esc(st)}">
+        <div class="arow"><h2 class="aname">${esc(a.name)}</h2><span class="when">${fmt(a.createdAt)}</span></div>
+        <div class="facts2">
+          <span>TikTok <a href="https://www.tiktok.com/@${encodeURIComponent(handle)}" target="_blank" rel="noopener">@${esc(handle)}</a></span>
+          <span>Alter <b>${esc(a.age)}</b></span>
+          <span>Ort <b>${esc(a.city)}</b></span>
+        </div>
+        ${a.about ? `<p class="about">${esc(a.about)}</p>` : ""}
+        <div class="actions">
+          <label for="st-${a.id}">Status</label>
+          <select id="st-${a.id}" data-st="${a.id}">${STATUSES.map(([k, l]) => `<option value="${k}" ${k === st ? "selected" : ""}>${l}</option>`).join("")}</select>
+          <span class="spacer"></span>
+          <button type="button" class="btn sm danger ${armed === a.id ? "armed" : ""}" data-del="${a.id}">${armed === a.id ? "Wirklich löschen?" : "Löschen"}</button>
+        </div>
+      </article>`;
+    }).join("");
+  }
+
+  $("filters").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-f]"); if (!b) return;
+    filter = b.dataset.f; render();
+  });
+  $("q").addEventListener("input", (e) => { q = e.target.value; render(); });
+  $("list").addEventListener("change", async (e) => {
+    const id = e.target.dataset.st; if (!id) return;
+    try { await updateDoc(doc(db, "applications", id), { status: e.target.value }); }
+    catch (err) { console.error(err); e.target.closest(".app").insertAdjacentHTML("beforeend", `<p class="err">Status nicht gespeichert. Bitte Seite neu laden.</p>`); }
+  });
+  $("list").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-del]"); if (!b) return;
+    const id = b.dataset.del;
+    if (armed !== id) { armed = id; render(); setTimeout(() => { if (armed === id) { armed = null; render(); } }, 4000); return; }
+    armed = null;
+    try { await deleteDoc(doc(db, "applications", id)); }
+    catch (err) { console.error(err); render(); }
+  });
+
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pw = $("pw").value;
+    if (!pw) return $("pw").focus();
+    $("loginBtn").disabled = true; $("loginErr").hidden = true;
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, pw);
+    } catch (err) {
+      console.error(err);
+      $("loginErr").textContent = "Passwort stimmt nicht. Bitte noch einmal versuchen.";
+      $("loginErr").hidden = false; $("pw").value = ""; $("pw").focus();
+    } finally { $("loginBtn").disabled = false; }
+  });
+  $("logout").addEventListener("click", () => signOut(auth));
+
+  onAuthStateChanged(auth, (user) => {
+    $("boot").hidden = true;
+    const ok = user?.email?.toLowerCase() === ADMIN_EMAIL;
+    $("loginView").hidden = ok; $("appView").hidden = !ok; $("logout").hidden = !ok;
+    if (unsub) { unsub(); unsub = null; }
+    if (!ok) { $("sub").textContent = "Interner Bereich für das One-Gem-Team."; return; }
+    unsub = onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
+      apps = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      render();
+    }, (err) => {
+      console.error(err);
+      $("list").innerHTML = `<p class="err">Bewerbungen können nicht geladen werden. Wahrscheinlich sind die neuen Firestore-Regeln noch nicht veröffentlicht.</p>`;
+    });
+  });
+</script>
+</body>
+</html>

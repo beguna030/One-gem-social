@@ -229,6 +229,40 @@ function CopyRow({ id, label, value }) {
         React.createElement(motion.button, { className: "btn sm", onClick: copy, whileTap: { scale: .95 }, "aria-live": "polite" }, done ? "Kopiert" : "Kopieren")));
 }
 const MAIL_TO = "sascha@one-gem.de";
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBPRhSkHQ3E1EP9W9xgqYzRjpuYIObpWDc",
+    authDomain: "backstage-beguna.firebaseapp.com",
+    projectId: "backstage-beguna",
+    storageBucket: "backstage-beguna.firebasestorage.app",
+    messagingSenderId: "7028261549",
+    appId: "1:7028261549:web:7a1a05279091909610bc24"
+};
+let fbDb = null;
+function getDb() {
+    if (fbDb)
+        return fbDb;
+    if (!window.firebase || !window.firebase.firestore)
+        throw new Error("firebase-missing");
+    if (!window.firebase.apps.length)
+        window.firebase.initializeApp(FIREBASE_CONFIG);
+    fbDb = window.firebase.firestore();
+    return fbDb;
+}
+async function saveApplication(v) {
+    const db = getDb();
+    const task = db.collection("applications").add({
+        name: v.name.trim(),
+        handle: v.handle.trim().replace(/^@/, ""),
+        age: parseInt(v.age, 10),
+        city: v.city.trim(),
+        about: v.about.trim(),
+        consent: true,
+        status: "neu",
+        createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 12000));
+    return Promise.race([task, timeout]);
+}
 function Field({ id, label, hint, error, children }) {
     return (React.createElement("div", { className: "field" + (error ? " has-error" : "") },
         React.createElement("label", { htmlFor: id }, label),
@@ -240,11 +274,12 @@ function Apply() {
     const [f, setF] = useState(empty);
     const [err, setErr] = useState({});
     const [sent, setSent] = useState(null);
+    const [busy, setBusy] = useState(false);
     const [copied, setCopied] = useState(false);
     const set = k => e => setF({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
     const check = v => {
         const e = {};
-        if (!v.name.trim())
+        if (v.name.trim().length < 2)
             e.name = "Bitte gib deinen Namen ein.";
         const h = v.handle.trim().replace(/^@/, "");
         if (!h)
@@ -275,8 +310,10 @@ function Apply() {
         "Über mich:",
         v.about.trim() || "(keine Angabe)",
     ].join("\n");
-    const submit = e => {
+    const submit = async (e) => {
         e.preventDefault();
+        if (busy)
+            return;
         const er = check(f);
         setErr(er);
         if (Object.keys(er).length) {
@@ -286,13 +323,24 @@ function Apply() {
             return;
         }
         const body = text(f);
-        const subject = "Bewerbung: @" + f.handle.trim().replace(/^@/, "");
-        setSent(body);
-        window.location.href = "mailto:" + MAIL_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+        setBusy(true);
+        try {
+            await saveApplication(f);
+            setSent({ ok: true, body });
+        }
+        catch (error) {
+            console.error(error);
+            const subject = "Bewerbung: @" + f.handle.trim().replace(/^@/, "");
+            setSent({ ok: false, body });
+            window.location.href = "mailto:" + MAIL_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+        }
+        finally {
+            setBusy(false);
+        }
     };
     const copy = async () => {
         try {
-            await navigator.clipboard.writeText(sent);
+            await navigator.clipboard.writeText(sent.body);
             setCopied(true);
             setTimeout(() => setCopied(false), 1800);
         }
@@ -314,19 +362,29 @@ function Apply() {
                     React.createElement("li", null, "Mindestens 18 Jahre alt"),
                     React.createElement("li", null, "Eigener TikTok-Account, Gr\u00F6\u00DFe egal"),
                     React.createElement("li", null, "Keine Geb\u00FChren, keine Beteiligung an deinen LIVE-Einnahmen"))),
-            sent ? (React.createElement(motion.div, { className: "applycard done", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, role: "status" },
+            sent && sent.ok ? (React.createElement(motion.div, { className: "applycard done", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, role: "status" },
+                React.createElement("h3", null, "Bewerbung ist da"),
+                React.createElement("p", null,
+                    "Danke, ",
+                    f.name.trim().split(" ")[0],
+                    ". Wir schauen uns ",
+                    React.createElement("b", null,
+                        "@",
+                        f.handle.trim().replace(/^@/, "")),
+                    " an und melden uns innerhalb von zwei Werktagen bei dir."),
+                React.createElement("p", null, "Bis dahin: einfach weiter posten."))) : sent ? (React.createElement(motion.div, { className: "applycard done", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, role: "status" },
                 React.createElement("h3", null, "Fast geschafft"),
                 React.createElement("p", null, "Dein E-Mail-Programm hat sich mit deiner Bewerbung ge\u00F6ffnet. Schick die Mail ab, dann ist sie bei uns."),
                 React.createElement("p", null,
                     "Hat sich nichts ge\u00F6ffnet? Kopier deine Bewerbung und schick sie an ",
                     React.createElement("b", null, MAIL_TO),
                     "."),
-                React.createElement("pre", { id: "ap-summary", className: "summary" }, sent),
+                React.createElement("pre", { id: "ap-summary", className: "summary" }, sent.body),
                 React.createElement("div", { className: "ctas", style: { marginTop: 0 } },
                     React.createElement("button", { type: "button", className: "btn gem sm", onClick: copy }, copied ? "Kopiert" : "Bewerbung kopieren"),
                     React.createElement("button", { type: "button", className: "btn sm", onClick: () => { setSent(null); } }, "Angaben \u00E4ndern")))) : (React.createElement("form", { className: "applycard", onSubmit: submit, noValidate: true },
                 React.createElement(Field, { id: "ap-name", label: "Wer bist du?", error: err.name },
-                    React.createElement("input", { id: "ap-name", name: "name", type: "text", autoComplete: "name", placeholder: "Vor- und Nachname", value: f.name, onChange: set("name"), "aria-invalid": !!err.name, "aria-describedby": describe("name") })),
+                    React.createElement("input", { id: "ap-name", name: "name", type: "text", maxLength: "100", autoComplete: "name", placeholder: "Vor- und Nachname", value: f.name, onChange: set("name"), "aria-invalid": !!err.name, "aria-describedby": describe("name") })),
                 React.createElement(Field, { id: "ap-handle", label: "TikTok-Account", hint: "So wie er in deinem Profil steht", error: err.handle },
                     React.createElement("div", { className: "prefix" },
                         React.createElement("span", { "aria-hidden": "true" }, "@"),
@@ -335,9 +393,9 @@ function Apply() {
                     React.createElement(Field, { id: "ap-age", label: "Alter", error: err.age },
                         React.createElement("input", { id: "ap-age", name: "age", type: "number", inputMode: "numeric", min: "18", max: "99", placeholder: "z. B. 24", value: f.age, onChange: set("age"), "aria-invalid": !!err.age, "aria-describedby": describe("age") })),
                     React.createElement(Field, { id: "ap-city", label: "Ort", error: err.city },
-                        React.createElement("input", { id: "ap-city", name: "city", type: "text", autoComplete: "address-level2", placeholder: "z. B. Berlin", value: f.city, onChange: set("city"), "aria-invalid": !!err.city, "aria-describedby": describe("city") }))),
+                        React.createElement("input", { id: "ap-city", name: "city", type: "text", maxLength: "100", autoComplete: "address-level2", placeholder: "z. B. Berlin", value: f.city, onChange: set("city"), "aria-invalid": !!err.city, "aria-describedby": describe("city") }))),
                 React.createElement(Field, { id: "ap-about", label: "\u00DCber dich (optional)", hint: "Was postest du, was willst du auf TikTok erreichen?" },
-                    React.createElement("textarea", { id: "ap-about", name: "about", rows: "4", value: f.about, onChange: set("about"), "aria-describedby": "ap-about-hint" })),
+                    React.createElement("textarea", { id: "ap-about", name: "about", rows: "4", maxLength: "2000", value: f.about, onChange: set("about"), "aria-describedby": "ap-about-hint" })),
                 React.createElement("div", { className: "consent" + (err.consent ? " has-error" : "") },
                     React.createElement("input", { id: "ap-consent", type: "checkbox", checked: f.consent, onChange: set("consent"), "aria-invalid": !!err.consent, "aria-describedby": describe("consent") }),
                     React.createElement("label", { htmlFor: "ap-consent" },
@@ -345,7 +403,7 @@ function Apply() {
                         React.createElement("a", { href: "datenschutz.html" }, "Datenschutzerkl\u00E4rung"),
                         ".")),
                 err.consent && React.createElement("p", { className: "ferr", id: "ap-consent-err", role: "alert" }, err.consent),
-                React.createElement(motion.button, { type: "submit", className: "btn gem", whileTap: { scale: .97 } }, "Bewerbung absenden"))))));
+                React.createElement(motion.button, { type: "submit", className: "btn gem", whileTap: { scale: .97 }, disabled: busy }, busy ? "Wird gesendet …" : "Bewerbung absenden"))))));
 }
 function Contact() {
     return (React.createElement("section", { id: "kontakt" },
