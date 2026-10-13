@@ -61,7 +61,7 @@ function Hero() {
                     line("Wir den Rest.", "soft", 2)),
                 React.createElement(motion.p, { className: "lede", initial: reduce ? false : { opacity: .3 }, animate: { opacity: 1 }, transition: { delay: .6, duration: .6 } }, "One Gem ist Social-Media-Management f\u00FCr Creator aus Berlin. Wir bringen dich auf TikTok LIVE, holen Kooperationen rein, entwickeln Video-Ideen mit dir und regeln Impressum und Papierkram."),
                 React.createElement("div", { className: "ctas" },
-                    React.createElement("a", { className: "btn gem", href: "#kontakt" }, "Erstgespr\u00E4ch anfragen"),
+                    React.createElement("a", { className: "btn gem", href: "#bewerben" }, "Jetzt bewerben"),
                     React.createElement("a", { className: "btn", href: "#live" }, "TikTok LIVE Network ansehen"))),
             React.createElement(Gem, null))));
 }
@@ -228,6 +228,125 @@ function CopyRow({ id, label, value }) {
             React.createElement("code", { id: id }, value)),
         React.createElement(motion.button, { className: "btn sm", onClick: copy, whileTap: { scale: .95 }, "aria-live": "polite" }, done ? "Kopiert" : "Kopieren")));
 }
+const MAIL_TO = "sascha@one-gem.de";
+function Field({ id, label, hint, error, children }) {
+    return (React.createElement("div", { className: "field" + (error ? " has-error" : "") },
+        React.createElement("label", { htmlFor: id }, label),
+        children,
+        error ? React.createElement("p", { className: "ferr", id: id + "-err", role: "alert" }, error) : hint ? React.createElement("p", { className: "fhint", id: id + "-hint" }, hint) : null));
+}
+function Apply() {
+    const empty = { name: "", handle: "", age: "", city: "", about: "", consent: false };
+    const [f, setF] = useState(empty);
+    const [err, setErr] = useState({});
+    const [sent, setSent] = useState(null);
+    const [copied, setCopied] = useState(false);
+    const set = k => e => setF({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
+    const check = v => {
+        const e = {};
+        if (!v.name.trim())
+            e.name = "Bitte gib deinen Namen ein.";
+        const h = v.handle.trim().replace(/^@/, "");
+        if (!h)
+            e.handle = "Bitte gib deinen Account-Namen ein.";
+        else if (!/^[A-Za-z0-9._]{2,30}$/.test(h))
+            e.handle = "Nur Buchstaben, Zahlen, Punkt und Unterstrich, 2 bis 30 Zeichen.";
+        const a = parseInt(v.age, 10);
+        if (!v.age)
+            e.age = "Bitte gib dein Alter an.";
+        else if (isNaN(a) || a < 1 || a > 99)
+            e.age = "Bitte gib ein gültiges Alter an.";
+        else if (a < 18)
+            e.age = "TikTok LIVE mit Einnahmen geht erst ab 18. Meld dich gern wieder, wenn du 18 bist.";
+        if (!v.city.trim())
+            e.city = "Bitte gib deinen Ort an.";
+        if (!v.consent)
+            e.consent = "Bitte bestätige, dass wir deine Angaben für die Bewerbung nutzen dürfen.";
+        return e;
+    };
+    const text = v => [
+        "Bewerbung TikTok Creator Network",
+        "",
+        "Name: " + v.name.trim(),
+        "Account: @" + v.handle.trim().replace(/^@/, ""),
+        "Alter: " + v.age,
+        "Ort: " + v.city.trim(),
+        "",
+        "Über mich:",
+        v.about.trim() || "(keine Angabe)",
+    ].join("\n");
+    const submit = e => {
+        e.preventDefault();
+        const er = check(f);
+        setErr(er);
+        if (Object.keys(er).length) {
+            const first = document.getElementById("ap-" + Object.keys(er)[0]);
+            if (first)
+                first.focus();
+            return;
+        }
+        const body = text(f);
+        const subject = "Bewerbung: @" + f.handle.trim().replace(/^@/, "");
+        setSent(body);
+        window.location.href = "mailto:" + MAIL_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    };
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(sent);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1800);
+        }
+        catch {
+            const r = document.createRange();
+            r.selectNodeContents(document.getElementById("ap-summary"));
+            const s = getSelection();
+            s.removeAllRanges();
+            s.addRange(r);
+        }
+    };
+    const describe = k => err[k] ? "ap-" + k + "-err" : undefined;
+    return (React.createElement("section", { id: "bewerben", className: "applysec" },
+        React.createElement("div", { className: "wrap applygrid" },
+            React.createElement("div", { className: "sechead", style: { marginBottom: 0 } },
+                React.createElement("h2", null, "Bewirb dich"),
+                React.createElement("p", { className: "lede" }, "Erz\u00E4hl uns kurz, wer du bist und wo wir dich finden. Wir schauen uns deinen Account an und melden uns innerhalb von zwei Werktagen."),
+                React.createElement("ul", { className: "reqs" },
+                    React.createElement("li", null, "Mindestens 18 Jahre alt"),
+                    React.createElement("li", null, "Eigener TikTok-Account, Gr\u00F6\u00DFe egal"),
+                    React.createElement("li", null, "Keine Geb\u00FChren, keine Beteiligung an deinen LIVE-Einnahmen"))),
+            sent ? (React.createElement(motion.div, { className: "applycard done", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, role: "status" },
+                React.createElement("h3", null, "Fast geschafft"),
+                React.createElement("p", null, "Dein E-Mail-Programm hat sich mit deiner Bewerbung ge\u00F6ffnet. Schick die Mail ab, dann ist sie bei uns."),
+                React.createElement("p", null,
+                    "Hat sich nichts ge\u00F6ffnet? Kopier deine Bewerbung und schick sie an ",
+                    React.createElement("b", null, MAIL_TO),
+                    "."),
+                React.createElement("pre", { id: "ap-summary", className: "summary" }, sent),
+                React.createElement("div", { className: "ctas", style: { marginTop: 0 } },
+                    React.createElement("button", { type: "button", className: "btn gem sm", onClick: copy }, copied ? "Kopiert" : "Bewerbung kopieren"),
+                    React.createElement("button", { type: "button", className: "btn sm", onClick: () => { setSent(null); } }, "Angaben \u00E4ndern")))) : (React.createElement("form", { className: "applycard", onSubmit: submit, noValidate: true },
+                React.createElement(Field, { id: "ap-name", label: "Wer bist du?", error: err.name },
+                    React.createElement("input", { id: "ap-name", name: "name", type: "text", autoComplete: "name", placeholder: "Vor- und Nachname", value: f.name, onChange: set("name"), "aria-invalid": !!err.name, "aria-describedby": describe("name") })),
+                React.createElement(Field, { id: "ap-handle", label: "TikTok-Account", hint: "So wie er in deinem Profil steht", error: err.handle },
+                    React.createElement("div", { className: "prefix" },
+                        React.createElement("span", { "aria-hidden": "true" }, "@"),
+                        React.createElement("input", { id: "ap-handle", name: "handle", type: "text", autoComplete: "off", autoCapitalize: "off", spellCheck: "false", placeholder: "deinname", value: f.handle, onChange: set("handle"), "aria-invalid": !!err.handle, "aria-describedby": describe("handle") || "ap-handle-hint" }))),
+                React.createElement("div", { className: "row2" },
+                    React.createElement(Field, { id: "ap-age", label: "Alter", error: err.age },
+                        React.createElement("input", { id: "ap-age", name: "age", type: "number", inputMode: "numeric", min: "18", max: "99", placeholder: "z. B. 24", value: f.age, onChange: set("age"), "aria-invalid": !!err.age, "aria-describedby": describe("age") })),
+                    React.createElement(Field, { id: "ap-city", label: "Ort", error: err.city },
+                        React.createElement("input", { id: "ap-city", name: "city", type: "text", autoComplete: "address-level2", placeholder: "z. B. Berlin", value: f.city, onChange: set("city"), "aria-invalid": !!err.city, "aria-describedby": describe("city") }))),
+                React.createElement(Field, { id: "ap-about", label: "\u00DCber dich (optional)", hint: "Was postest du, was willst du auf TikTok erreichen?" },
+                    React.createElement("textarea", { id: "ap-about", name: "about", rows: "4", value: f.about, onChange: set("about"), "aria-describedby": "ap-about-hint" })),
+                React.createElement("div", { className: "consent" + (err.consent ? " has-error" : "") },
+                    React.createElement("input", { id: "ap-consent", type: "checkbox", checked: f.consent, onChange: set("consent"), "aria-invalid": !!err.consent, "aria-describedby": describe("consent") }),
+                    React.createElement("label", { htmlFor: "ap-consent" },
+                        "Ich bin einverstanden, dass One Gem meine Angaben zur Bearbeitung meiner Bewerbung nutzt. Mehr dazu in der ",
+                        React.createElement("a", { href: "datenschutz.html" }, "Datenschutzerkl\u00E4rung"),
+                        ".")),
+                err.consent && React.createElement("p", { className: "ferr", id: "ap-consent-err", role: "alert" }, err.consent),
+                React.createElement(motion.button, { type: "submit", className: "btn gem", whileTap: { scale: .97 } }, "Bewerbung absenden"))))));
+}
 function Contact() {
     return (React.createElement("section", { id: "kontakt" },
         React.createElement("div", { className: "wrap" },
@@ -252,13 +371,16 @@ function App() {
                     React.createElement("li", null,
                         React.createElement("a", { href: "#live" }, "TikTok LIVE")),
                     React.createElement("li", null,
+                        React.createElement("a", { href: "#bewerben" }, "Bewerben")),
+                    React.createElement("li", null,
                         React.createElement("a", { href: "#team" }, "Team"))),
-                React.createElement("a", { className: "btn gem sm", href: "#kontakt" }, "Kontakt"))),
+                React.createElement("a", { className: "btn gem sm", href: "#bewerben" }, "Bewerben"))),
         React.createElement(Hero, null),
         React.createElement(Marquee, null),
         React.createElement(Services, null),
         React.createElement(Live, null),
         React.createElement(Steps, null),
+        React.createElement(Apply, null),
         React.createElement(Beguna, null),
         React.createElement(Team, null),
         React.createElement(Contact, null),
