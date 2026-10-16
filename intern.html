@@ -66,7 +66,7 @@
 
   <section id="loginView" class="applycard login" hidden>
     <h3>Anmelden</h3>
-    <p>Gleiches Passwort wie im BeGuNa-Backoffice.</p>
+    <p>Mit dem gemeinsamen Team-Passwort.</p>
     <form id="loginForm" class="field" novalidate>
       <label for="pw">Passwort</label>
       <input id="pw" type="password" autocomplete="current-password" required>
@@ -92,14 +92,14 @@
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
   const app = initializeApp({
-    apiKey: "AIzaSyBPRhSkHQ3E1EP9W9xgqYzRjpuYIObpWDc",
-    authDomain: "backstage-beguna.firebaseapp.com",
-    projectId: "backstage-beguna",
-    storageBucket: "backstage-beguna.firebasestorage.app",
-    messagingSenderId: "7028261549",
-    appId: "1:7028261549:web:7a1a05279091909610bc24"
+    apiKey: "AIzaSyAwX75E8noN1JU2HBTAGyaUZ3i1twyX6HY",
+    authDomain: "social-one-gem.firebaseapp.com",
+    projectId: "social-one-gem",
+    storageBucket: "social-one-gem.firebasestorage.app",
+    messagingSenderId: "487709531500",
+    appId: "1:487709531500:web:e8428a97914e09a1bc2749"
   });
-  const ADMIN_EMAIL = "team@backstage-beguna.app";
+  const ADMIN_EMAIL = "team@one-gem.de";
   const db = getFirestore(app);
   const auth = getAuth(app);
 
@@ -192,7 +192,7 @@
       render();
     }, (err) => {
       console.error(err);
-      $("list").innerHTML = `<p class="err">Bewerbungen können nicht geladen werden. Wahrscheinlich sind die neuen Firestore-Regeln noch nicht veröffentlicht.</p>`;
+      $("list").innerHTML = `<p class="err">Bewerbungen können nicht geladen werden. Prüfe, ob die Firestore-Regeln im Projekt „Social One Gem“ veröffentlicht sind.</p>`;
     });
   });
 </script>

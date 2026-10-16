@@ -230,12 +230,12 @@ function CopyRow({ id, label, value }) {
 }
 const MAIL_TO = "sascha@one-gem.de";
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyBPRhSkHQ3E1EP9W9xgqYzRjpuYIObpWDc",
-    authDomain: "backstage-beguna.firebaseapp.com",
-    projectId: "backstage-beguna",
-    storageBucket: "backstage-beguna.firebasestorage.app",
-    messagingSenderId: "7028261549",
-    appId: "1:7028261549:web:7a1a05279091909610bc24"
+    apiKey: "AIzaSyAwX75E8noN1JU2HBTAGyaUZ3i1twyX6HY",
+    authDomain: "social-one-gem.firebaseapp.com",
+    projectId: "social-one-gem",
+    storageBucket: "social-one-gem.firebasestorage.app",
+    messagingSenderId: "487709531500",
+    appId: "1:487709531500:web:e8428a97914e09a1bc2749"
 };
 let fbDb = null;
 function getDb() {
